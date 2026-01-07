@@ -31,6 +31,8 @@ bm p                # paste from cloud
 - 🚀 **Zero config** - Auto setup on first use
 - 🔄 **Cross-device** - Mac, Linux, Windows, iPhone browser
 - 📦 **Pure Python** - No external dependencies
+- 🔐 **Encrypted** - Content encrypted before upload
+- 🗜️ **Compressed** - Reduce transfer size (~60% for code)
 - 🔓 **Open source** - MIT License
 
 ## Usage
@@ -49,14 +51,17 @@ pbpaste | bm c  # from clipboard
 bm p
 ```
 
-### Edit Key
+### Edit Key & Password
 
 ```bash
-# Interactive edit
+# Interactive edit (key + password)
 bm e
 
 # Set new key directly
 bm e mynewkey
+
+# Set encryption password
+bm e -p mypassword
 ```
 
 ### Alternative Usage
@@ -107,9 +112,25 @@ Config file location: `~/.config/beam/config.json`
 
 ```json
 {
-  "key": "your_personal_key"
+  "key": "your_personal_key",
+  "password": "your_encryption_password"
 }
 ```
+
+- `key`: Your personal key for TextDB API
+- `password`: Encryption password (default: `123456`)
+
+## Security
+
+All content is **compressed** (zlib) and **encrypted** (XOR + SHA256) before upload:
+
+```
+Your text → Compress → Encrypt → Base64 → Upload
+```
+
+The server only sees encrypted data like `BM2:xxxxx...`, unable to read your content.
+
+> ⚠️ This is lightweight encryption for convenience, not for highly sensitive data.
 
 ## Requirements
 

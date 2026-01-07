@@ -2,11 +2,18 @@
 
 import sys
 import json
+import zlib
+import base64
+import hashlib
 import argparse
 from pathlib import Path
 from urllib import request, parse
 
 from . import __version__
+
+COMPRESS_PREFIX = "BM1:"  # v1: compress only
+ENCRYPT_PREFIX = "BM2:"   # v2: compress + encrypt
+DEFAULT_PASSWORD = "123456"
 
 
 API_BASE = "https://api.textdb.online"
@@ -84,6 +91,52 @@ def api_delete(key):
         return json.loads(response.read().decode())
 
 
+def get_password():
+    config = load_config()
+    return config.get("password", DEFAULT_PASSWORD)
+
+
+def derive_key(password, length):
+    # derive a key from password using SHA256
+    key = hashlib.sha256(password.encode()).digest()
+    # extend key if needed
+    while len(key) < length:
+        key += hashlib.sha256(key).digest()
+    return key[:length]
+
+
+def xor_crypt(data, password):
+    key = derive_key(password, len(data))
+    return bytes(a ^ b for a, b in zip(data, key))
+
+
+def encode_payload(text):
+    password = get_password()
+    compressed = zlib.compress(text.encode(), level=9)
+    encrypted = xor_crypt(compressed, password)
+    encoded = base64.urlsafe_b64encode(encrypted).decode()
+    return f"{ENCRYPT_PREFIX}{encoded}"
+
+
+def decode_payload(data):
+    # v2: encrypted + compressed
+    if data.startswith(ENCRYPT_PREFIX):
+        password = get_password()
+        encoded = data[len(ENCRYPT_PREFIX):]
+        encrypted = base64.urlsafe_b64decode(encoded)
+        compressed = xor_crypt(encrypted, password)
+        return zlib.decompress(compressed).decode()
+    
+    # v1: compressed only (backward compatible)
+    if data.startswith(COMPRESS_PREFIX):
+        encoded = data[len(COMPRESS_PREFIX):]
+        compressed = base64.urlsafe_b64decode(encoded)
+        return zlib.decompress(compressed).decode()
+    
+    # raw text (backward compatible)
+    return data
+
+
 def cmd_copy(args):
     key = get_or_set_key()
     text = args.text
@@ -96,10 +149,15 @@ def cmd_copy(args):
         print("Error: no text to copy", file=sys.stderr)
         sys.exit(1)
     
-    response = api_update(key, text)
+    original_len = len(text)
+    payload = encode_payload(text)
+    payload_len = len(payload)
+    
+    response = api_update(key, payload)
     
     if response.get('status') == 1:
-        print(f"✓ Copied to cloud")
+        ratio = (1 - payload_len / original_len) * 100 if original_len > 0 else 0
+        print(f"✓ Copied to cloud ({original_len} → {payload_len}, -{ratio:.0f}%)")
         print(f"Access URL: {READ_BASE}/{key}")
     else:
         print("Error: failed to copy", file=sys.stderr)
@@ -113,6 +171,11 @@ def cmd_paste(args):
     if content is None:
         print("Error: no content found", file=sys.stderr)
         sys.exit(1)
+    
+    try:
+        content = decode_payload(content)
+    except Exception:
+        pass  # invalid format, use raw content
     
     print(content, end='')
 
@@ -130,35 +193,60 @@ def cmd_delete(args):
 
 def cmd_edit(args):
     config = load_config()
+    changed = False
     
+    # handle key
     if args.key:
         key = args.key
-    else:
+        if len(key) < 6 or len(key) > 60:
+            print("Error: key must be 6-60 characters", file=sys.stderr)
+            sys.exit(1)
+        if "/" in key:
+            print("Error: key cannot contain '/'", file=sys.stderr)
+            sys.exit(1)
+        config["key"] = key
+        changed = True
+        print(f"✓ Key updated: {key}")
+        print(f"Access URL: {READ_BASE}/{key}")
+    
+    # handle password
+    if args.password:
+        config["password"] = args.password
+        changed = True
+        print(f"✓ Password updated")
+    
+    # interactive mode if no args
+    if not args.key and not args.password:
         current_key = config.get("key", "")
+        current_pwd = config.get("password", DEFAULT_PASSWORD)
+        
         print(f"Current key: {current_key}" if current_key else "No key configured")
+        print(f"Current password: {current_pwd}")
+        
         print("\nEnter new key (or press Enter to keep current):")
         key = input("Key: ").strip()
-        
-        if not key:
-            if current_key:
-                print("Key unchanged")
-                return
-            else:
-                print("Error: no key provided", file=sys.stderr)
+        if key:
+            if len(key) < 6 or len(key) > 60:
+                print("Error: key must be 6-60 characters", file=sys.stderr)
                 sys.exit(1)
+            if "/" in key:
+                print("Error: key cannot contain '/'", file=sys.stderr)
+                sys.exit(1)
+            config["key"] = key
+            changed = True
+        
+        print("\nEnter new password (or press Enter to keep current):")
+        password = input("Password: ").strip()
+        if password:
+            config["password"] = password
+            changed = True
     
-    if len(key) < 6 or len(key) > 60:
-        print("Error: key must be 6-60 characters", file=sys.stderr)
-        sys.exit(1)
-    
-    if "/" in key:
-        print("Error: key cannot contain '/'", file=sys.stderr)
-        sys.exit(1)
-    
-    config["key"] = key
-    save_config(config)
-    print(f"✓ Key updated: {key}")
-    print(f"Access URL: {READ_BASE}/{key}")
+    if changed:
+        save_config(config)
+        if not args.key and not args.password:
+            print("✓ Config updated")
+    else:
+        print("No changes made")
 
 
 def main():
@@ -185,8 +273,9 @@ def main():
     parser_delete.set_defaults(func=cmd_delete)
     
     # edit
-    parser_edit = subparsers.add_parser('e', aliases=['edit'], help='Edit personal key')
+    parser_edit = subparsers.add_parser('e', aliases=['edit'], help='Edit key/password')
     parser_edit.add_argument('key', nargs='?', help='New key to set')
+    parser_edit.add_argument('-p', '--password', help='Set encryption password')
     parser_edit.set_defaults(func=cmd_edit)
     
     # version
