@@ -1,13 +1,19 @@
-[![PyPI version](https://badge.fury.io/py/beam-clipboard.svg)](https://pypi.org/project/beam-clipboard/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-# Beam - Cross-device Clipboard
-
-[中文文档](README_CN.md)
-
-Command-line tool for cross-device text sharing via cloud API.
-
-**Just 2 commands: `bm c` (copy) and `bm p` (paste)**
+<div align="center">
+  <img src="assets/logo.svg" width="200" height="200" alt="Beam Logo">
+  
+  # Beam
+  
+  **Cross-device clipboard.**
+  
+  [![PyPI version](https://badge.fury.io/py/beam-clipboard.svg)](https://pypi.org/project/beam-clipboard/)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  
+  [中文文档](README_CN.md)
+  
+  Command-line tool for cross-device text sharing via cloud API.
+  
+  **Just 2 commands: `bm c` (copy) and `bm p` (paste)**
+</div>
 
 ## Quick Start
 

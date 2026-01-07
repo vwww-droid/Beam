@@ -1,13 +1,19 @@
-[![PyPI version](https://badge.fury.io/py/beam-clipboard.svg)](https://pypi.org/project/beam-clipboard/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-# Beam - 跨设备剪贴板
-
-[English](README.md)
-
-通过云端 API 实现快速跨设备文本共享的命令行工具。
-
-**只需两个命令: `bm c` (复制) 和 `bm p` (粘贴)**
+<div align="center">
+  <img src="assets/logo.svg" width="200" height="200" alt="Beam Logo">
+  
+  # Beam
+  
+  **跨设备剪贴板.**
+  
+  [![PyPI version](https://badge.fury.io/py/beam-clipboard.svg)](https://pypi.org/project/beam-clipboard/)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  
+  [English](README.md)
+  
+  通过云端 API 实现快速跨设备文本共享的命令行工具。
+  
+  **只需两个命令: `bm c` (复制) 和 `bm p` (粘贴)**
+</div>
 
 ## 快速开始
 
@@ -31,6 +37,8 @@ bm p              # 从云端粘贴
 - 🚀 **零配置** - 首次使用自动设置
 - 🔄 **跨设备** - Mac, Linux, Windows, iPhone 浏览器
 - 📦 **纯 Python** - 无额外依赖
+- 🔐 **加密** - 上传前加密内容
+- 🗜️ **压缩** - 减少传输大小 (代码可压缩约 60%)
 - 🔓 **开源** - MIT License
 
 ## 使用方法
@@ -49,14 +57,17 @@ pbpaste | bm c  # 从剪贴板复制
 bm p
 ```
 
-### 修改 Key
+### 修改 Key 和密码
 
 ```bash
-# 交互式修改
+# 交互式修改 (key + 密码)
 bm e
 
 # 直接设置新 key
 bm e mynewkey
+
+# 设置加密密码
+bm e -p mypassword
 ```
 
 ### 其他使用方式
@@ -107,9 +118,25 @@ Key 要求:
 
 ```json
 {
-  "key": "your_personal_key"
+  "key": "your_personal_key",
+  "password": "your_encryption_password"
 }
 ```
+
+- `key`: 你在 TextDB API 使用的个人 key
+- `password`: 加密密码 (默认: `123456`)
+
+## 安全性
+
+所有内容在上传前都会先**压缩** (zlib) 再**加密** (XOR + SHA256):
+
+```
+你的文本 → 压缩 → 加密 → Base64 → 上传
+```
+
+服务器只能看到类似 `BM2:xxxxx...` 的加密数据, 无法读取你的内容。
+
+> ⚠️ 这是为便利性设计的轻量级加密, 不适用于高度敏感数据。
 
 ## 依赖
 

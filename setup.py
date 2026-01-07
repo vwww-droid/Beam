@@ -6,7 +6,7 @@ long_description = (this_directory / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="beam-clipboard",
-    version="1.0.0",
+    version="0.1.0",
     author="vw2x",
     description="Cross-device clipboard tool via cloud",
     long_description=long_description,
