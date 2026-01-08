@@ -16,8 +16,8 @@ ENCRYPT_PREFIX = "BM2:"   # v2: compress + encrypt
 DEFAULT_PASSWORD = "123456"
 
 
-API_BASE = "https://api.textdb.online"
-READ_BASE = "https://textdb.online"
+DEFAULT_API_BASE = "https://api.textdb.online"
+DEFAULT_READ_BASE = "https://textdb.online"
 CONFIG_DIR = Path.home() / ".config" / "beam"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 
@@ -37,6 +37,16 @@ def load_config():
 def save_config(config):
     with CONFIG_FILE.open("w") as f:
         json.dump(config, f, indent=2)
+
+
+def get_api_base():
+    config = load_config()
+    return config.get("api_base", DEFAULT_API_BASE)
+
+
+def get_read_base():
+    config = load_config()
+    return config.get("read_base", DEFAULT_READ_BASE)
 
 
 def get_or_set_key():
@@ -60,21 +70,21 @@ def get_or_set_key():
     config["key"] = key
     save_config(config)
     print(f"✓ Key saved: {key}")
-    print(f"Access URL: {READ_BASE}/{key}")
+    print(f"Access URL: {get_read_base()}/{key}")
     
     return key
 
 
 def api_update(key, value):
     encoded_value = parse.quote(value)
-    url = f"{API_BASE}/update/?key={key}&value={encoded_value}"
+    url = f"{get_api_base()}/update/?key={key}&value={encoded_value}"
     
     with request.urlopen(url) as response:
         return json.loads(response.read().decode())
 
 
 def api_read(key):
-    url = f"{READ_BASE}/{key}"
+    url = f"{get_read_base()}/{key}"
     
     try:
         with request.urlopen(url) as response:
@@ -85,7 +95,7 @@ def api_read(key):
 
 
 def api_delete(key):
-    url = f"{API_BASE}/update/?key={key}&value="
+    url = f"{get_api_base()}/update/?key={key}&value="
     
     with request.urlopen(url) as response:
         return json.loads(response.read().decode())
@@ -163,7 +173,7 @@ def cmd_copy(args):
         else:
             ratio = (1 - payload_len / original_len) * 100 if original_len > 0 else 0
             print(f"✓ Copied to cloud ({original_len} → {payload_len}, -{ratio:.0f}%)")
-        print(f"Access URL: {READ_BASE}/{key}")
+        print(f"Access URL: {get_read_base()}/{key}")
     else:
         print("Error: failed to copy", file=sys.stderr)
         sys.exit(1)
@@ -200,6 +210,24 @@ def cmd_edit(args):
     config = load_config()
     changed = False
     
+    # handle server URLs
+    if args.server:
+        server = args.server.rstrip('/')
+        # for textdb.online compatible format
+        if 'textdb.online' in server or 'demo.textdb.online' in server:
+            if server.startswith('https://api.'):
+                config["api_base"] = server
+                config["read_base"] = server.replace('//api.', '//')
+            else:
+                config["read_base"] = server
+                config["api_base"] = server.replace('//', '//api.')
+        else:
+            # for custom deployment, assume api at /api path
+            config["read_base"] = server
+            config["api_base"] = f"{server}/api"
+        changed = True
+        print(f"✓ Server updated: {server}")
+    
     # handle key
     if args.key:
         key = args.key
@@ -212,7 +240,7 @@ def cmd_edit(args):
         config["key"] = key
         changed = True
         print(f"✓ Key updated: {key}")
-        print(f"Access URL: {READ_BASE}/{key}")
+        print(f"Access URL: {get_read_base()}/{key}")
     
     # handle password
     if args.password:
@@ -221,12 +249,33 @@ def cmd_edit(args):
         print("✓ Password updated")
     
     # interactive mode if no args
-    if not args.key and not args.password:
+    if not args.key and not args.password and not args.server:
+        current_server = config.get("read_base", DEFAULT_READ_BASE)
         current_key = config.get("key", "")
         current_pwd = config.get("password", DEFAULT_PASSWORD)
         
+        print(f"Current server: {current_server}")
         print(f"Current key: {current_key}" if current_key else "No key configured")
         print(f"Current password: {current_pwd}")
+        
+        print("\nEnter new server URL (or press Enter to keep current):")
+        print("Example: https://your-domain.com or https://demo.textdb.online")
+        server = input("Server: ").strip()
+        if server:
+            server = server.rstrip('/')
+            # for textdb.online compatible format
+            if 'textdb.online' in server or 'demo.textdb.online' in server:
+                if server.startswith('https://api.'):
+                    config["api_base"] = server
+                    config["read_base"] = server.replace('//api.', '//')
+                else:
+                    config["read_base"] = server
+                    config["api_base"] = server.replace('//', '//api.')
+            else:
+                # for custom deployment, assume api at /api path
+                config["read_base"] = server
+                config["api_base"] = f"{server}/api"
+            changed = True
         
         print("\nEnter new key (or press Enter to keep current):")
         key = input("Key: ").strip()
@@ -248,7 +297,7 @@ def cmd_edit(args):
     
     if changed:
         save_config(config)
-        if not args.key and not args.password:
+        if not args.key and not args.password and not args.server:
             print("✓ Config updated")
     else:
         print("No changes made")
@@ -279,8 +328,9 @@ def main():
     parser_delete.set_defaults(func=cmd_delete)
     
     # edit
-    parser_edit = subparsers.add_parser('e', aliases=['edit'], help='Edit key/password')
+    parser_edit = subparsers.add_parser('e', aliases=['edit'], help='Edit server/key/password')
     parser_edit.add_argument('key', nargs='?', help='New key to set')
+    parser_edit.add_argument('-s', '--server', help='Set custom server URL (e.g., https://your-domain.com)')
     parser_edit.add_argument('-p', '--password', help='Set encryption password')
     parser_edit.set_defaults(func=cmd_edit)
     

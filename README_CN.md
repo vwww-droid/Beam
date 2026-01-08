@@ -63,11 +63,14 @@ bm p
 ### 修改 Key 和密码
 
 ```bash
-# 交互式修改 (key + 密码)
+# 交互式修改 (server + key + 密码)
 bm e
 
 # 直接设置新 key
 bm e mynewkey
+
+# 设置自定义服务器 URL
+bm e -s https://your-domain.com
 
 # 设置加密密码
 bm e -p mypassword
@@ -117,7 +120,7 @@ bm p
 
 ## API 说明
 
-基于 TextDB.online 服务:
+基于 [TextDB.online](https://textdb.online/) 免费服务:
 
 - **创建/更新**: `https://api.textdb.online/update/?key={key}&value={text}`
 - **读取**: `https://textdb.online/{key}`
@@ -128,19 +131,65 @@ Key 要求:
 - 不能包含斜杠 (/)
 - 建议 20+ 字符以保证安全性
 
+### 服务限制说明
+
+TextDB.online 是一个免费公共服务, 具有以下特点:
+
+- ✅ **免费使用** - 无需注册
+- ✅ **读取无限制** - 获取数据无次数限制
+- ⚠️ **写入限制 500次/天/IP** - 包含创建、更新、删除操作总和
+- ⚠️ **建议测试使用** - 不保证生产环境稳定性
+- ⚠️ **1年自动删除** - 数据1年未更新会自动删除
+- ⚠️ **无密码保护** - 建议使用长 key (20+ 字符) 避免碰撞
+
+**重要提示**: 本工具设计用于个人设备间便捷的文本共享, 不适合存储关键或高度敏感数据。加密提供基本隐私保护, 但不应依赖于保密性要求高的信息。
+
+### 私有部署
+
+如需用于生产环境或追求更高可靠性, 可以部署自己的 TextDB 服务器:
+
+1. **获取离线版本**: TextDB.online 提供 [私有部署版本](https://demo.textdb.online/)
+2. **配置 Beam 使用你的服务器**:
+   ```bash
+   bm e -s https://your-domain.com
+   ```
+3. **私有部署的优势**:
+   - 更高的稳定性和性能
+   - 无速率限制
+   - 完全的数据控制权
+   - 更好的安全性
+
+如果你自行实现 API 服务器, 需确保遵循 TextDB API 格式:
+- 写入端点: `{api_base}/update/?key={key}&value={text}`
+- 读取端点: `{read_base}/{key}`
+
 ## 配置文件
 
 配置保存在: `~/.config/beam/config.json`
 
 ```json
 {
+  "api_base": "https://api.textdb.online",
+  "read_base": "https://textdb.online",
   "key": "your_personal_key",
   "password": "your_encryption_password"
 }
 ```
 
+- `api_base`: API 服务器 URL, 用于写入操作 (默认: `https://api.textdb.online`)
+- `read_base`: 服务器 URL, 用于读取操作 (默认: `https://textdb.online`)
 - `key`: 你在 TextDB API 使用的个人 key
 - `password`: 加密密码 (默认: `123456`)
+
+### 使用私有部署
+
+如果你部署了自己的 TextDB 服务器, 可以这样配置:
+
+```bash
+bm e -s https://your-domain.com
+```
+
+或直接编辑配置文件设置 `api_base` 和 `read_base`。
 
 ## 安全性
 

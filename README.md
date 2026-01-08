@@ -63,11 +63,14 @@ bm p
 ### Edit Key & Password
 
 ```bash
-# Interactive edit (key + password)
+# Interactive edit (server + key + password)
 bm e
 
 # Set new key directly
 bm e mynewkey
+
+# Set custom server URL
+bm e -s https://your-domain.com
 
 # Set encryption password
 bm e -p mypassword
@@ -117,7 +120,7 @@ bm p
 
 ## API Details
 
-Based on TextDB.online service:
+Based on [TextDB.online](https://textdb.online/) free service:
 
 - **Create/Update**: `https://api.textdb.online/update/?key={key}&value={text}`
 - **Read**: `https://textdb.online/{key}`
@@ -128,19 +131,65 @@ Key requirements:
 - No slashes (/)
 - Recommend 20+ chars for security
 
+### Service Limitations
+
+TextDB.online is a free public service with the following characteristics:
+
+- ✅ **Free to use** - No registration required
+- ✅ **Unlimited reads** - No limit on data retrieval
+- ⚠️ **500 writes/day/IP** - Combined create/update/delete operations
+- ⚠️ **Testing recommended** - Not guaranteed for production use
+- ⚠️ **1-year retention** - Data auto-deleted after 1 year of inactivity
+- ⚠️ **No password protection** - Use long keys (20+ chars) to avoid collisions
+
+**Important**: This tool is designed for convenient text sharing between your own devices, not for storing critical or highly sensitive data. The encryption provides basic privacy protection but should not be relied upon for confidential information.
+
+### Private Deployment
+
+For production use or higher reliability, you can deploy your own TextDB server:
+
+1. **Get the offline version**: TextDB.online offers a [private deployment version](https://demo.textdb.online/) 
+2. **Configure Beam to use your server**:
+   ```bash
+   bm e -s https://your-domain.com
+   ```
+3. **Benefits of private deployment**:
+   - Higher stability and performance
+   - No rate limits
+   - Full data control
+   - Better security
+
+For custom API server implementations, ensure they follow the TextDB API format:
+- Write endpoint: `{api_base}/update/?key={key}&value={text}`
+- Read endpoint: `{read_base}/{key}`
+
 ## Configuration
 
 Config file location: `~/.config/beam/config.json`
 
 ```json
 {
+  "api_base": "https://api.textdb.online",
+  "read_base": "https://textdb.online",
   "key": "your_personal_key",
   "password": "your_encryption_password"
 }
 ```
 
+- `api_base`: API server URL for write operations (default: `https://api.textdb.online`)
+- `read_base`: Server URL for read operations (default: `https://textdb.online`)
 - `key`: Your personal key for TextDB API
 - `password`: Encryption password (default: `123456`)
+
+### Using Private Deployment
+
+If you deploy your own TextDB server, configure it with:
+
+```bash
+bm e -s https://your-domain.com
+```
+
+Or edit the config file directly to set `api_base` and `read_base`.
 
 ## Security
 
