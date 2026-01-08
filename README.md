@@ -53,6 +53,9 @@ bm c "hello world"
 echo "hello" | bm c
 pbpaste | bm c  # from clipboard
 
+# Plain text mode (for browser viewing on mobile devices)
+bm c --plain "hello world"
+
 # Paste text
 bm p
 ```
@@ -79,7 +82,7 @@ python -m beam p
 
 ## Use Cases
 
-### 💻 Sync Between Computers
+### 💻 Computer Sync
 
 ```bash
 # computer A
@@ -89,14 +92,27 @@ bm c "some data"
 bm p
 ```
 
-### 📱 Mac to iPhone Transfer
+### 📱 Computer & Mobile
+
+**Computer to Mobile (view in browser)**
 
 ```bash
-# on Mac
-pbpaste | bm c
+# on computer
+bm c --plain "hello world"
 
-# on iPhone browser
+# on mobile browser
 # visit: https://textdb.online/yourkey
+```
+
+**Mobile to Computer (input in browser)**
+
+```bash
+# on mobile browser
+# visit: https://textdb.online/yourkey
+# input your text directly
+
+# on computer
+bm p
 ```
 
 ## API Details
@@ -135,6 +151,8 @@ Your text → Compress → Encrypt → Base64 → Upload
 ```
 
 The server only sees encrypted data like `BM2:xxxxx...`, unable to read your content.
+
+Use `--plain` option to skip compression and encryption for non-sensitive content that needs to be viewed in a browser on mobile devices.
 
 > ⚠️ This is lightweight encryption for convenience, not for highly sensitive data.
 

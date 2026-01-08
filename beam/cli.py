@@ -110,7 +110,9 @@ def xor_crypt(data, password):
     return bytes(a ^ b for a, b in zip(data, key))
 
 
-def encode_payload(text):
+def encode_payload(text, plain=False):
+    if plain:
+        return text
     password = get_password()
     compressed = zlib.compress(text.encode(), level=9)
     encrypted = xor_crypt(compressed, password)
@@ -150,14 +152,17 @@ def cmd_copy(args):
         sys.exit(1)
     
     original_len = len(text)
-    payload = encode_payload(text)
+    payload = encode_payload(text, plain=args.plain)
     payload_len = len(payload)
     
     response = api_update(key, payload)
     
     if response.get('status') == 1:
-        ratio = (1 - payload_len / original_len) * 100 if original_len > 0 else 0
-        print(f"✓ Copied to cloud ({original_len} → {payload_len}, -{ratio:.0f}%)")
+        if args.plain:
+            print("✓ Copied to cloud (plain text)")
+        else:
+            ratio = (1 - payload_len / original_len) * 100 if original_len > 0 else 0
+            print(f"✓ Copied to cloud ({original_len} → {payload_len}, -{ratio:.0f}%)")
         print(f"Access URL: {READ_BASE}/{key}")
     else:
         print("Error: failed to copy", file=sys.stderr)
@@ -185,7 +190,7 @@ def cmd_delete(args):
     response = api_delete(key)
     
     if response.get('status') == 1:
-        print(f"✓ Deleted cloud content")
+        print("✓ Deleted cloud content")
     else:
         print("Error: failed to delete", file=sys.stderr)
         sys.exit(1)
@@ -213,7 +218,7 @@ def cmd_edit(args):
     if args.password:
         config["password"] = args.password
         changed = True
-        print(f"✓ Password updated")
+        print("✓ Password updated")
     
     # interactive mode if no args
     if not args.key and not args.password:
@@ -262,6 +267,7 @@ def main():
     # copy
     parser_copy = subparsers.add_parser('c', aliases=['copy'], help='Copy text to cloud')
     parser_copy.add_argument('text', nargs='?', help='Text to copy')
+    parser_copy.add_argument('--plain', action='store_true', help='Plain text mode without encryption')
     parser_copy.set_defaults(func=cmd_copy)
     
     # paste

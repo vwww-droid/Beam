@@ -53,6 +53,9 @@ bm c "hello world"
 echo "hello" | bm c
 pbpaste | bm c  # 从剪贴板复制
 
+# 明文模式 (用于移动设备浏览器查看)
+bm c --plain "hello world"
+
 # 粘贴文本
 bm p
 ```
@@ -89,14 +92,27 @@ bm c "some data"
 bm p
 ```
 
-### 📱 Mac 复制到 iPhone
+### 📱 电脑与移动设备互传
+
+**电脑到手机 (浏览器查看)**
 
 ```bash
-# 在 Mac 上
-pbpaste | bm c
+# 在电脑上
+bm c --plain "hello world"
 
-# 在 iPhone 浏览器访问
+# 在手机浏览器访问
 # https://textdb.online/你的key
+```
+
+**手机到电脑 (浏览器输入)**
+
+```bash
+# 在手机浏览器访问
+# https://textdb.online/你的key
+# 直接输入文本
+
+# 在电脑上
+bm p
 ```
 
 ## API 说明
@@ -135,6 +151,8 @@ Key 要求:
 ```
 
 服务器只能看到类似 `BM2:xxxxx...` 的加密数据, 无法读取你的内容。
+
+使用 `--plain` 选项可以跳过压缩和加密, 适用于需要在移动设备浏览器中查看的非敏感内容。
 
 > ⚠️ 这是为便利性设计的轻量级加密, 不适用于高度敏感数据。
 
