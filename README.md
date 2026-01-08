@@ -18,8 +18,11 @@
 ## Quick Start
 
 ```bash
-# Install
+# Install (basic)
 pip install beam-clipboard
+
+# Install with clipboard support (recommended)
+pip install beam-clipboard[clipboard]
 
 # First time: set your personal key
 bm c "hello world"
@@ -46,12 +49,21 @@ bm p                # paste from cloud
 ### Copy & Paste
 
 ```bash
-# Copy text
+# Copy text directly
 bm c "hello world"
 
-# Copy from stdin
+# Copy from stdin (all platforms)
 echo "hello" | bm c
-pbpaste | bm c  # from clipboard
+cat file.txt | bm c
+
+# Copy from system clipboard (requires pyperclip)
+bm c
+
+# Platform-specific clipboard commands (alternative without pyperclip)
+pbpaste | bm c           # macOS
+xclip -o | bm c          # Linux X11
+wl-paste | bm c          # Linux Wayland
+Get-Clipboard | bm c     # Windows PowerShell
 
 # Plain text mode (for browser viewing on mobile devices)
 bm c --plain "hello world"
@@ -208,6 +220,13 @@ Use `--plain` option to skip compression and encryption for non-sensitive conten
 ## Requirements
 
 - Python 3.6+
+- pyperclip (optional, for clipboard support)
+
+To install with clipboard support:
+
+```bash
+pip install beam-clipboard[clipboard]
+```
 
 ## Contributing
 

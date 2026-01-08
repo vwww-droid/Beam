@@ -18,8 +18,11 @@
 ## 快速开始
 
 ```bash
-# 安装
+# 安装 (基础版)
 pip install beam-clipboard
+
+# 安装带剪贴板支持 (推荐)
+pip install beam-clipboard[clipboard]
 
 # 首次使用: 设置个人 key
 bm c "hello world"
@@ -46,12 +49,21 @@ bm p              # 从云端粘贴
 ### 复制和粘贴
 
 ```bash
-# 复制文本
+# 直接复制文本
 bm c "hello world"
 
-# 从 stdin 复制
+# 从 stdin 复制 (所有平台)
 echo "hello" | bm c
-pbpaste | bm c  # 从剪贴板复制
+cat file.txt | bm c
+
+# 从系统剪贴板复制 (需要安装 pyperclip)
+bm c
+
+# 平台特定的剪贴板命令 (不安装 pyperclip 的替代方案)
+pbpaste | bm c           # macOS
+xclip -o | bm c          # Linux X11
+wl-paste | bm c          # Linux Wayland
+Get-Clipboard | bm c     # Windows PowerShell
 
 # 明文模式 (用于移动设备浏览器查看)
 bm c --plain "hello world"
@@ -208,6 +220,13 @@ bm e -s https://your-domain.com
 ## 依赖
 
 - Python 3.6+
+- pyperclip (可选, 用于剪贴板支持)
+
+安装带剪贴板支持的版本:
+
+```bash
+pip install beam-clipboard[clipboard]
+```
 
 ## 贡献
 

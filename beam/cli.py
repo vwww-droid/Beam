@@ -153,13 +153,26 @@ def cmd_copy(args):
     key = get_or_set_key()
     text = args.text
     
-    # read from stdin if no text
+    # Priority 1: explicit text argument
     if not text and not sys.stdin.isatty():
+        # Priority 2: stdin (pipe)
         text = sys.stdin.read().strip()
     
+    # Priority 3: system clipboard (fallback)
     if not text:
-        print("Error: no text to copy", file=sys.stderr)
-        sys.exit(1)
+        try:
+            import pyperclip
+            text = pyperclip.paste()
+            if not text:
+                print("Error: clipboard is empty", file=sys.stderr)
+                sys.exit(1)
+        except ImportError:
+            print("Error: no text to copy", file=sys.stderr)
+            print("Tip: Install pyperclip for clipboard support: pip install pyperclip", file=sys.stderr)
+            sys.exit(1)
+        except Exception as e:
+            print(f"Error: failed to read clipboard: {e}", file=sys.stderr)
+            sys.exit(1)
     
     original_len = len(text)
     payload = encode_payload(text, plain=args.plain)

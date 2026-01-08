@@ -6,7 +6,7 @@ long_description = (this_directory / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="beam-clipboard",
-    version="0.1.0",
+    version="0.2.0",
     author="vw2x",
     description="Cross-device clipboard tool via cloud",
     long_description=long_description,
@@ -27,6 +27,9 @@ setup(
         "Programming Language :: Python :: 3.11",
     ],
     python_requires=">=3.6",
+    extras_require={
+        "clipboard": ["pyperclip>=1.8.0"],
+    },
     entry_points={
         "console_scripts": [
             "bm=beam.cli:main",
