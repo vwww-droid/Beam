@@ -241,7 +241,7 @@ MIT License
 
 ## 作者
 
-[vw2x](https://github.com/vw2x)
+[vw2x](https://github.com/vwww-droid)
 
 ---
 
