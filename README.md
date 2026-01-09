@@ -19,10 +19,10 @@
 
 ```bash
 # Install (basic)
-pip install beam-clipboard
+pip install beam-clipboard -i https://pypi.org/simple
 
 # Install with clipboard support (recommended)
-pip install beam-clipboard[clipboard]
+pip install 'beam-clipboard[clipboard]' -i https://pypi.org/simple
 
 # First time: set your personal key
 bm c "hello world"
@@ -225,7 +225,7 @@ Use `--plain` option to skip compression and encryption for non-sensitive conten
 To install with clipboard support:
 
 ```bash
-pip install beam-clipboard[clipboard]
+pip install 'beam-clipboard[clipboard]'
 ```
 
 ## Contributing

@@ -19,10 +19,10 @@
 
 ```bash
 # 安装 (基础版)
-pip install beam-clipboard
+pip install beam-clipboard -i https://pypi.org/simple
 
 # 安装带剪贴板支持 (推荐)
-pip install beam-clipboard[clipboard]
+pip install 'beam-clipboard[clipboard]' -i https://pypi.org/simple
 
 # 首次使用: 设置个人 key
 bm c "hello world"
