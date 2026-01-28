@@ -8,6 +8,7 @@ import hashlib
 import argparse
 from pathlib import Path
 from urllib import request, parse
+from fake_useragent import UserAgent
 
 from . import __version__
 
@@ -75,11 +76,17 @@ def get_or_set_key():
     return key
 
 
+def make_request(url):
+    ua = UserAgent()
+    req = request.Request(url, headers={"User-Agent": ua.chrome})
+    return request.urlopen(req)
+
+
 def api_update(key, value):
     encoded_value = parse.quote(value)
     url = f"{get_api_base()}/update/?key={key}&value={encoded_value}"
     
-    with request.urlopen(url) as response:
+    with make_request(url) as response:
         return json.loads(response.read().decode())
 
 
@@ -87,7 +94,7 @@ def api_read(key):
     url = f"{get_read_base()}/{key}"
     
     try:
-        with request.urlopen(url) as response:
+        with make_request(url) as response:
             if response.status == 200:
                 return response.read().decode()
     except Exception:
@@ -97,7 +104,7 @@ def api_read(key):
 def api_delete(key):
     url = f"{get_api_base()}/update/?key={key}&value="
     
-    with request.urlopen(url) as response:
+    with make_request(url) as response:
         return json.loads(response.read().decode())
 
 
